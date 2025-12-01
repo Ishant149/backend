@@ -1,13 +1,19 @@
-FROM openjdk:17-jdk-slim
-
+############### BUILD STAGE ###############
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-COPY pom.xml .
-COPY src ./src
+COPY backend/pom.xml .
+COPY backend/src ./src
 
-RUN apt-get update && apt-get install -y maven
 RUN mvn clean package -DskipTests
+
+############### RUN STAGE ###############
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+
+# Copy jar (auto-detect the correct name)
+COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "target/email-tracker-backend-1.0.0.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
